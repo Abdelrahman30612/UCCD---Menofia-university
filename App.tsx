@@ -5,7 +5,7 @@ import CoursesSection from './components/CoursesSection';
 import Footer from './components/Footer';
 import TeamSection from './components/TeamSection';
 import ContactSection from './components/ContactSection';
-import { Course, TeamMember } from './types';
+import { Course, TeamData } from './types';
 import { fetchCourses, fetchTeamData } from './utils/api';
 
 export type Tab = 'home' | 'courses' | 'team';
@@ -13,7 +13,7 @@ export type Tab = 'home' | 'courses' | 'team';
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>('home');
   const [courses, setCourses] = useState<Course[]>([]);
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [teamData, setTeamData] = useState<TeamData>({ team: [], volunteers: [] });
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,12 +22,12 @@ const App: React.FC = () => {
       try {
         setLoading(true);
         // Fetch all datasets in parallel
-        const [coursesData, teamData] = await Promise.all([
+        const [coursesData, teamDataResult] = await Promise.all([
           fetchCourses(),
           fetchTeamData(),
         ]);
         setCourses(coursesData);
-        setTeamMembers(teamData);
+        setTeamData(teamDataResult);
       } catch (err) {
         console.error("Failed to load initial data:", err);
         setError("فشل تحميل بعض البيانات. قد يتم عرض بيانات احتياطية.");
@@ -59,7 +59,7 @@ const App: React.FC = () => {
           </>
         )}
         {activeTab === 'courses' && <CoursesSection courses={courses} />}
-        {activeTab === 'team' && <TeamSection members={teamMembers} />}
+        {activeTab === 'team' && <TeamSection data={teamData} />}
       </main>
       <Footer />
     </div>
