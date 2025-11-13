@@ -1,4 +1,4 @@
-import { Course, TeamMember } from '../types';
+import { Course, TeamMember, TeamData } from '../types';
 
 // --- Parsers ---
 
@@ -33,18 +33,19 @@ const parseCoursesCSV = (csvText: string): Course[] => {
   return courses;
 };
 
-const parseTeamCSV = (csvText: string): TeamMember[] => {
+const parseTeamCSV = (csvText: string): TeamData => {
     const lines = csvText.trim().replace(/^\uFEFF/, '').split(/\r?\n/);
-    if (lines.length < 2) return [];
+    if (lines.length < 2) return { team: [], volunteers: [] };
 
     const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
-    const members: TeamMember[] = [];
+    const team: TeamMember[] = [];
+    const volunteers: TeamMember[] = [];
     
     const nameIndex = headers.indexOf('Name');
     const jobTitleIndex = headers.indexOf('Job Title');
     const imageUrlIndex = headers.indexOf('ImageURL');
 
-    if (nameIndex === -1 || jobTitleIndex === -1 || imageUrlIndex === -1) return [];
+    if (nameIndex === -1 || jobTitleIndex === -1 || imageUrlIndex === -1) return { team: [], volunteers: [] };
     
     for (let i = 1; i < lines.length; i++) {
         if (!lines[i].trim()) continue;
@@ -54,15 +55,22 @@ const parseTeamCSV = (csvText: string): TeamMember[] => {
         const memberName = values[nameIndex] || '';
         if (!memberName || memberName === '##') continue;
 
-        members.push({
+        const jobTitle = values[jobTitleIndex] || 'عضو فريق';
+        const member: TeamMember = {
             name: memberName,
-            jobTitle: values[jobTitleIndex] || 'عضو فريق',
+            jobTitle: jobTitle,
             imageUrl: (values[imageUrlIndex] && !['##', '[URL]'].includes(values[imageUrlIndex])) 
                 ? values[imageUrlIndex] 
                 : `https://ui-avatars.com/api/?name=${encodeURIComponent(memberName)}&background=0284c7&color=fff&size=300`,
-        });
+        };
+        
+        if (jobTitle.trim() === 'متطوع') {
+            volunteers.push(member);
+        } else {
+            team.push(member);
+        }
     }
-    return members;
+    return { team, volunteers };
 };
 
 
@@ -94,7 +102,7 @@ export const fetchCourses = async (): Promise<Course[]> => {
     return parseCoursesCSV(csvText);
 };
 
-export const fetchTeamData = async (): Promise<TeamMember[]> => {
+export const fetchTeamData = async (): Promise<TeamData> => {
     const csvText = await fetchDataWithFallback(G_SHEET_TEAM_URL, LOCAL_TEAM_URL);
     return parseTeamCSV(csvText);
 };
