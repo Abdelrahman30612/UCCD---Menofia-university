@@ -1,4 +1,3 @@
-
 export interface Course {
   title: string;
   description: string;
@@ -14,4 +13,9 @@ export interface TeamMember {
   name: string;
   jobTitle: string;
   imageUrl: string;
+}
+
+export interface TeamData {
+  team: TeamMember[];
+  volunteers: TeamMember[];
 }
